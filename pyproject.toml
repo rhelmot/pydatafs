@@ -1,0 +1,123 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pydatafs"
+dynamic = ["version"]
+authors = [
+    { name = "Audrey Dutcher", email = "audrey@rhelmot.io" },
+]
+description = "Library for pythonically constructing fuse filesystems"
+requires-python = ">=3.8"
+keywords = []
+
+dependencies = [
+    "pyfuse3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "tox>=4.0.0",
+    "black",
+    "isort",
+    "pre-commit",
+]
+type = [
+    "mypy",
+]
+test = [
+    "pytest",
+    "pytest-cov",
+    "coverage[toml]"
+]
+lint = [
+    "pylint",
+]
+doc = [
+    "sphinx",
+    "furo",
+]
+
+[project.urls]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.license]
+file = "LICENSE"
+
+[tool.setuptools]
+zip-safe = false
+package-data = { pydatatask = ["py.typed"] }
+packages = ["pydatafs"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pydatafs.__version__"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=pydatafs --cov-report=xml -ra --log-level INFO"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+force_to_top = ["typing"]
+from_first = true
+skip = ["__init__.py"]
+
+[tool.pylint]
+py-version = "3.8"
+
+[tool.pylint.FORMAT]
+max-line-length = 120
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+    "invalid-name",
+    "len-as-condition",
+    "locally-disabled",
+    "no-else-return",
+    "protected-access",
+    "too-few-public-methods",
+    "too-many-ancestors",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-nested-blocks",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-statements",
+    "unidiomatic-typecheck",
+    "consider-using-f-string",
+    "broad-exception-raised",  # TODO fix
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self\\.debug",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+
+    # Don't complain about abstract methods, they aren't run:
+    "@(abc\\.)?abstract",
+]
+
+[tool.ruff]
+line-length = 120
