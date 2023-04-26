@@ -6,14 +6,16 @@ from asyncio import Lock
 
 import pyfuse3
 
+from .errors import FSInvalidError, FSMissingError
+
 if TYPE_CHECKING:
-    from pyfuse3 import InodeT, FileHandleT, FileNameT, ModeT, FlagsT
+    from pyfuse3 import InodeT, FileHandleT, FileNameT, ModeT, FlagT
 else:
     InodeT = int
     FileHandleT = int
     FileNameT = bytes
     ModeT = int
-    FlagsT = int
+    FlagT = int
 
 __all__ = ("FSEntity", "File", "Directory", "Symlink")
 
@@ -41,7 +43,7 @@ class FSEntity:
         return 0
 
     async def unlink(self) -> None:
-        raise pyfuse3.FUSEError(errno.EPERM)
+        raise FSInvalidError()
 
     def __eq__(self, other):
         raise NotImplementedError(type(self))
@@ -60,6 +62,9 @@ class File(FSEntity):
 
     async def flush(self) -> None:
         pass
+
+    async def truncate(self, off: int):
+        raise NotImplementedError
 
 
 class RWBufferedFile(File):
@@ -119,13 +124,26 @@ class RWBufferedFile(File):
             self._dirty = True
         return len(data)
 
+    async def truncate(self, off: int):
+        async with self._lock:
+            if off == 0:
+                self._content = bytearray()
+                self._dirty = True
+            else:
+                self._content = (await self.content())[0:off]
+                self._dirty = True
+
     async def flush(self):
         async with self._lock:
             if self._dirty:
                 assert self._content is not None
                 if self._writeback_routine:
-                    await self._writeback_routine(self._content)
-                self._content = None
+                    try:
+                        await self._writeback_routine(self._content)
+                    except:
+                        self._dirty = False
+                        self._content = None
+                        raise
                 self._dirty = False
 
     async def size(self) -> int:
@@ -160,14 +178,20 @@ class Directory(FSEntity):
                 return child
         return None
 
-    async def create(self, name: str, mode: ModeT, flags: FlagsT) -> File:
-        raise pyfuse3.FUSEError(errno.EPERM)
+    async def create(self, name: str, mode: ModeT, flags: FlagT) -> File:
+        raise FSInvalidError()
 
     async def mkdir(self, name: str, mode: ModeT) -> "Directory":
-        raise pyfuse3.FUSEError(errno.EPERM)
+        raise FSInvalidError()
 
-    async def symlink(self, name: str, value: str) -> "Symlink":
-        raise pyfuse3.FUSEError(errno.EPERM)
+    async def symlink(self, name: str, target: str) -> "Symlink":
+        raise FSInvalidError()
+
+    async def unlink_child(self, name: str):
+        child = await self.get_child(name)
+        if child is None:
+            raise FSMissingError()
+        await child.unlink()
 
 
 class Symlink(FSEntity):

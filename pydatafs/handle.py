@@ -2,7 +2,7 @@ from typing import Generic, TypeVar, List, Tuple
 
 from .files import FSEntity, Directory, File
 
-__all__ = ('FSHandle',)
+__all__ = ('FSHandle', 'DirectoryHandle', 'FileHandle')
 
 T = TypeVar("T", bound=FSEntity)
 
