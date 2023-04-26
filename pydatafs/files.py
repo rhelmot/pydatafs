@@ -1,15 +1,23 @@
-from typing import TYPE_CHECKING, Optional, Tuple, AsyncGenerator, Union, Awaitable, Callable
+from typing import (
+    TYPE_CHECKING,
+    AsyncGenerator,
+    Awaitable,
+    Callable,
+    Optional,
+    Tuple,
+    Union,
+)
+from asyncio import Lock
+from datetime import datetime, timedelta
 import errno
 import stat
-from datetime import datetime, timedelta
-from asyncio import Lock
 
 import pyfuse3
 
 from .errors import FSInvalidError, FSMissingError
 
 if TYPE_CHECKING:
-    from pyfuse3 import InodeT, FileHandleT, FileNameT, ModeT, FlagT
+    from pyfuse3 import FileHandleT, FileNameT, FlagT, InodeT, ModeT
 else:
     InodeT = int
     FileHandleT = int
@@ -50,7 +58,7 @@ class FSEntity:
 
 
 class File(FSEntity):
-    def __init__(self, mode = 0o644):
+    def __init__(self, mode=0o644):
         mode |= stat.S_IFREG
         super().__init__(mode)
 

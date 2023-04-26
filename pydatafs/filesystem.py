@@ -1,17 +1,17 @@
-from typing import Optional, TYPE_CHECKING, Dict, Tuple, TypeVar, cast
-import os
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, TypeVar, cast
 import errno
-import logging
 import functools
+import logging
+import os
 
 import pyfuse3
 import pyfuse3_asyncio
 
-from .files import Directory, FSEntity, File, Symlink
-from .handle import FSHandle, DirectoryHandle, FileHandle
+from .files import Directory, File, FSEntity, Symlink
+from .handle import DirectoryHandle, FileHandle, FSHandle
 
 if TYPE_CHECKING:
-    from pyfuse3 import InodeT, FileHandleT, FileNameT, FlagT, ModeT
+    from pyfuse3 import FileHandleT, FileNameT, FlagT, InodeT, ModeT
 else:
     InodeT = int
     FileHandleT = int
@@ -19,9 +19,10 @@ else:
     FlagT = int
     ModeT = int
 
-T = TypeVar('T', bound=FSEntity)
+T = TypeVar("T", bound=FSEntity)
 
 log = logging.getLogger(__name__)
+
 
 def async_fuse_condom(f):
     @functools.wraps(f)
@@ -33,6 +34,7 @@ def async_fuse_condom(f):
         except Exception:
             log.exception("")
             raise pyfuse3.FUSEError(errno.EIO)
+
     return inner
 
 
@@ -375,9 +377,7 @@ class PyDataFS(pyfuse3.Operations):
         return attrs
 
     @async_fuse_condom
-    async def unlink(
-        self, parent_inode: InodeT, name: FileNameT, ctx: pyfuse3.RequestContext
-    ) -> None:
+    async def unlink(self, parent_inode: InodeT, name: FileNameT, ctx: pyfuse3.RequestContext) -> None:
         parent_entity = self.entity_lookup.get(parent_inode, None)
         if parent_entity is None:
             raise pyfuse3.FUSEError(errno.ENOENT)
@@ -393,9 +393,7 @@ class PyDataFS(pyfuse3.Operations):
         await parent_entity.unlink_child(name_str)
 
     @async_fuse_condom
-    async def rmdir(
-        self, parent_inode: InodeT, name: FileNameT, ctx: pyfuse3.RequestContext
-    ) -> None:
+    async def rmdir(self, parent_inode: InodeT, name: FileNameT, ctx: pyfuse3.RequestContext) -> None:
         parent_entity = self.entity_lookup.get(parent_inode, None)
         if parent_entity is None:
             raise pyfuse3.FUSEError(errno.ENOENT)
